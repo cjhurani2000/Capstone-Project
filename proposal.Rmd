@@ -1,0 +1,31 @@
+---
+title: "Capstone Project Proposal: Comparison of Hypertension Medications"
+author: "Chetna Jhurani"
+date: "January 27, 2018"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. What is the problem you want to solve?
+
+  Hypertension is a rising problem in many Americans. As the demand for the medications rises, so does the cost. This makes it difficult for many people to afford their medication. However, oftentimes there are cheaper medications than those typically prescribed. The goal of this project is to help find the cheapest medications available for hypertension.
+
+## 2.	Who is your client and why do they care about this problem? In other words what would your client DO or DECIDE based on your analysis that they wouldn’t have otherwise.
+
+	The clients will be both patients and doctors. Knowing the financial situation of the patients and the fact that there are cheaper medications available will encourage doctors to prescribe the cheaper medications that will work in a similar method rather than prescribing the most popular brand name. It will also encourage patients to ask their doctors about these medications, and ultimately, they will have to be the ones purchasing these medications. 
+	
+## 3.	What data are you going to use for this? How will you acquire this data?
+
+	The data I will need for this will obviously be the final cost of the hypertension medications paid for by the patients. I will also need the names of hypertension medications sorted by their method of treatment (ARBs, beta blockers, etc). Since the drug cost information mostly concerns lower-income patients, this information will be taken from the official Medicaid website. The Medicaid website contains a table of federal upper limits on each of their drugs seen here <https://data.medicaid.gov/Drug-Pricing-and-Payment/Federal-Upper-Limits-2017-12/3usn-qyfh/data>. 
+	This table contains a breakdown of each drug covered by the program, the average manufacturing price of the drug, and the amount covered by month. A list of hypertension medications and their various classes (i.e. ARBs, diuretics, etc) will have to be taken from the Mayo Clinic website as well. 
+	
+## 4.	In brief, outline your approach to solving this problem (knowing this may change later).
+
+	Since Federal Upper Limits table contains every single drug covered by the Medicaid program, I will have to condense this table to only include hypertension medications listed by the Mayo Clinic. Then, I will have to create a column in this table for the price paid by the patients by subtracting the amount covered from the original cost of the drug. I will also need to add a column listing the class of the drug. I will ultimately present the data in a histogram divided by the class of drug, comparing the cost of each drug side by side in increasing order. I will finally compare the average cost of each class against the other (i.e. are ARBs more expensive than beta blockers overall)? This will be presented in a histogram.
+	
+## 5.	What are our deliverables? Typically, this would include code, along with a paper and/or slide deck.
+
+The deliverables will be raw data for an app for hypertension medications covered by Medicaid. It will recommend the cheapest medication overall as well as the cheapest medication by class. It will finally also compare the average cost of each class of drug. This will have to use the most current data provided by Medicaid, so it will have to be updated with the monthly information from the Federal Upper Limits provided on the website.
