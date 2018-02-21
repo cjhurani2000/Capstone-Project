@@ -6,6 +6,21 @@ library(tidyr)
 FUL <- read_csv("Federal_Upper_Limits_-_2017_12.csv")
 View(FUL)
 
+#The year and month are the same for all, and we don't care about the NDC. Delete those.
+FUL <- select(FUL, -NDC, -Year, -Month)
+
+#rename some columns to make it easier to delete those too
+names(FUL)[names(FUL) == "Package Size"] <- "Size"
+names(FUL)[names(FUL) == "Product Group"] <- "Group"
+names(FUL)[names(FUL) == "Multiplier Greater Than 175 Percent of Weighted Avg of AMPs"] <- "Delete2"
+names(FUL)[names(FUL) == "A-Rated"] <- "Rating"
+names(FUL)[names(FUL) == "MDR Unit Type"] <- "Unit"
+
+FUL <- select(FUL, -Size, -Group, -Delete2, -Rating, -Route, -Unit)
+
+#keep the distinct rows from here
+FUL <- distinct(FUL)
+
 #rename columns to make them easier to use
 names(FUL)[names(FUL) == "ACA FUL"] <- "Full"
 names(FUL)[names(FUL) == "Weighted Average AMPs"] <- "AMPs"
@@ -13,10 +28,19 @@ names(FUL)[names(FUL) == "Weighted Average AMPs"] <- "AMPs"
 #Add column for Price Paid by Customer (Paid)
 FUL <- mutate(FUL, Paid = Full - AMPs)
 
-#keep only one row of each ingredient
+#What is needed is the price per miligram. Isolate the strength and go from there
+FUL <- separate(FUL, 3, c("Strength", "Delete"), sep = "MG")
+FUL <- select(FUL, -Delete)
+FUL <- mutate(FUL, PPMG = Paid/as.numeric(Strength))
+
+#keep one row of each ingredient
 FUL <- FUL %>%
   group_by(Ingredient) %>%
-  summarise(min(Paid))
+  mutate(min(PPMG))
+
+names(FUL)[names(FUL) == "min(PPMG)"] <- "min_PPMG"
+FUL <- filter(FUL, PPMG == min_PPMG)
+
 
 #medications
 #diuretics: Hyrdochlorothiazide
@@ -44,39 +68,10 @@ FUL[which(FUL$Ingredient == "DILTIAZEM HYDROCHLORIDE"), "Type"] <- "CCB"
 types <- c("diuretic", "beta blocker", "ACE inhibitor", "ARB", "CCB")
 FUL <- filter(FUL, Type %in% types)
 
+#pure/not pure
+FUL$Pure <- "N"
+pure <- c("CAPTOPRIL", "LISINOPRIL", "ATENOLOL", "HYDROCHLOROTHIAZIDE")
+FUL[which(FUL$Ingredient %in% pure), "Pure"] <- "Y"
+
 #create file
 write.csv(FUL, "coverage_clean.csv")
-
-
-
-#Notes
-#I was having a little bit of trouble with trying to get the string to contain the string rather than matching the exact string.
-#I tried writing it as %ATENOLOL% or trying the contains function but kept getting syntax errors.
-#I was able to successfully use the filter function but figured it was easier to enter in the medications once and then use the !is.na function for all rows missing values in the Type column.
-#However, I kept getting syntax errors when using is.na, so I just made a vector of the types.
-#Basically, the data looks the way I want it to look, but the code is still kind of tedious.
-
-
-
-
-#unused mess down here--disregard
-#create function to check for each medication
-findmed <- function(medication, ...) {
-  filter(Federal_Upper_Limits_2017_12, Ingredient == medication)
-}
-
-filter(Federal_Upper_Limits_2017_12, Ingredient == "HYDROCHLOROTHIAZIDE")
-       , Ingredient == "Acebutolol", Ingredient == "Lisinopril", Ingredient == "Benazepril", Ingredient == "Captopril", Ingredient == "Candesartan", Ingredient == "Losartan", Ingredient == "Amlodipine", Ingredient == "Diltiazem")
-
-#filter table to only conntain relevant hypertension medications
-Federal_Upper_Limits_2017_12 <- findmed("Hydrochlorothiazide", "Acebutolol", "Atenolol", "Lisinopril", "Benazepril", "Captopril", "Candesartan", "Losartan", "Amlodipine", "Diltiazem")
-
-#get rid of unneeded up columns
-#Month and Year are not needed, because they are all from 12/17
-FUL <- select(FUL, -Year, -Month)
-
-#filter table to only include hypertension medications
-medication <- c("HYDROCHLOROTHIAZIDE", "ACEBUTOLOL", "ATENOLOL", "LISINOPRIL", "BENAZEPRIL", "CAPTOPRIL", "CANDESARTAN", "LOSARTAN", "AMLODIPINE", "DILTIAZEM")
-FUL <- FUL %>%
-  filter(Ingredient %in%
-           medication)
