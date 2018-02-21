@@ -29,7 +29,7 @@ names(FUL)[names(FUL) == "Weighted Average AMPs"] <- "AMPs"
 FUL <- mutate(FUL, Paid = Full - AMPs)
 
 #What is needed is the price per miligram. Isolate the strength and go from there
-FUL <- separate(FUL, 3, c("Strength", "Delete"), sep = "MG")
+FUL <- separate(FUL, 2, c("Strength", "Delete"), sep = "MG")
 FUL <- select(FUL, -Delete)
 FUL <- mutate(FUL, PPMG = Paid/as.numeric(Strength))
 
@@ -40,7 +40,7 @@ FUL <- FUL %>%
 
 names(FUL)[names(FUL) == "min(PPMG)"] <- "min_PPMG"
 FUL <- filter(FUL, PPMG == min_PPMG)
-
+FUL <-select(FUL, -min_PPMG)
 
 #medications
 #diuretics: Hyrdochlorothiazide
