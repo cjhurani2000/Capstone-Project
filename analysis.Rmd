@@ -1,0 +1,80 @@
+---
+title: "Analysis"
+author: "Chetna Jhurani"
+date: "February 20, 2018"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## A Simple Glance at the Data
+```{r echo = FALSE}
+library(readr)
+coverage_clean <- read_csv("coverage_clean.csv")
+View(coverage_clean)
+library(knitr)
+kable(coverage_clean, caption = "Coverage Data")
+```
+The first thing to do here is obviously to arrange the data by price (PPMG) and/or by type to see if there is any trend here.
+```{r echo = FALSE}
+library(dplyr)
+coverage_clean <- arrange(coverage_clean, PPMG)
+kable(coverage_clean, caption = "Arranged Coverage Data")
+```
+
+Looking at the data here, there do seem to be some trends in the prices such as the type of drug as well as the purity of the substances. However, this will probably be much more visible in scatter plots.
+
+## Scatterplot
+
+Below is a basic scatterplot of all of the hypertension medications. However, this plot by itself doesn't really reveal much.
+```{r basic_coverage, echo = FALSE}
+library(ggplot2)
+basic_coverage <- coverage_clean %>%
+ggplot(aes(x = Ingredient, y = PPMG*1000)) +
+  geom_point()
+
+plot(basic_coverage)
+```
+
+## Taking it a Step Further
+
+To test out the theory that there is a noticable difference in price based on purity and the method of action for each drug, some sort of summary statistic is needed. I chose to use the mean, since there is little data based on type.
+```{r echo = TRUE}
+cov_type <- coverage_clean %>% 
+  group_by(Type) %>% 
+  summarize(mean_PPMG = mean(PPMG)) %>% 
+  arrange(mean_PPMG)
+
+cov_pure <- coverage_clean %>%
+  group_by(Pure) %>%
+  summarize(mean_PPMG = mean(PPMG)) %>%
+  arrange (mean_PPMG)
+```
+Now that the statistics have been saved, they can be graphed. I chose to use a scatterplot for both statistics.
+```{r plot_pure, echo = FALSE}
+
+plot_pure <- cov_pure %>%
+  ggplot (aes(x = Pure, y = mean_PPMG * 1000)) +
+  geom_point()
+
+plot(plot_pure)
+
+```
+```{r plot_type, echo = FALSE}
+plot_type<- cov_type %>% 
+  ggplot(aes(x = Type, y = mean_PPMG * 1000)) +
+  geom_point()
+
+plot(plot_type)
+```
+
+Looking at these graphs, the theory is confirmed. There is a noticable difference in both the type of hypertension medication prescribed and its purity. Looking first at the purity, there is an obvious price increase when the medication is not a pure substance. This make sense, as it involves including more than one substance.
+
+Now, looking at the medication types, the ARBs are much more expensive than any other type of medication. However, when referring back to the table, the two ARB medications are on two opposite ends of the spectrum, so the price is heavily skewed by Candesartan Cilexetil. The others seem to be closer to the same price. What is interesting about this data is that diuretics are by far the cheapest medication after coverage and are the ofen the first hypertension medication prescribed.
+
+## Why Only Scatterplots
+Only scatterplots are included here in order to note the trends as most of this data is qualitative. There is no measure of frequency, so there is no need for a bar graph, histogram, or box and whisker plot. Additionally, as the independent variable is qualitative, a line graph also has no purpose as all the levels on the x-axis are equal.
