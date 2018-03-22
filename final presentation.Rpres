@@ -1,0 +1,79 @@
+Comparison of Hypertension Medications
+========================================================
+author: Chetna Jhurani
+autosize: true
+
+Problem
+========================================================
+- Hypertension's prevalence in America
+- Access/Affordabilitiy of medication
+
+
+Types of Hypertension Medications
+========================================================
+
+- Diuretics
+- Beta Blockers
+- Angiotensin-converting enzyme (ACE) inhibitors
+- Angiotensin II receptor blockers (ARBs)
+- Calcium channel blockers (CCBs)
+
+Hypertension Medications Covered by Medicaid
+========================================================
+```{r echo = FALSE}
+library(readr)
+coverage_clean <- read_csv("coverage_clean.csv")
+View(coverage_clean)
+library(knitr)
+kable(coverage_clean, caption = "Coverage Data")
+```
+Hypertension Medications Covered by Medicaid
+========================================================
+```{r basic_coverage, echo = FALSE}
+library(ggplot2)
+library(dplyr)
+basic_coverage <- coverage_clean %>%
+ggplot(aes(y = Ingredient, x = PPMG*1000)) +
+  geom_point()
+
+plot(basic_coverage)
+```
+How Much Do We Pay?
+========================================================
+```{r plot_type, echo = FALSE}
+cov_type <- coverage_clean %>% 
+  group_by(Type) %>% 
+  summarize(mean_PPMG = mean(PPMG)) %>% 
+  arrange(mean_PPMG)
+plot_type<- cov_type %>% 
+  ggplot(aes(x = Type, y = mean_PPMG * 1000)) +
+  geom_point()
+
+plot(plot_type)
+```
+
+How Often Is Each Type Prescribed?
+========================================================
+```{r echo = FALSE}
+library(readr)
+freq_cov <- read_csv("coverage_summary.csv")
+View(freq_cov)
+library(knitr)
+kable(freq_cov, caption = "Prescription Frequency")
+```
+Frequency vs Mean Price
+========================================================
+```{r sub.mean.freq, echo = FALSE}
+sub.mean.freq <- subset(freq_cov, select = c("Mean_PPMG", "Frequency"))
+plot(sub.mean.freq)
+```
+
+Resulting Formula
+========================================================
+y = 13.34x + 0.14
+
+Who Will Use This?
+========================================================
+- Customers: Finding cheapest medication
+- Physicians: Prescribing cheaper medication types
+- Medicaid: Increasing coverage
