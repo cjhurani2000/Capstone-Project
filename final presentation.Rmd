@@ -144,7 +144,7 @@ summary(freq.mod)
 anova(freq.mod)
 ```
 
-  The results of the linear regression formula gives us a line around approximately y = 13.34x + 0.14. The resulting R-squared value shows a moderately strong positive correlation between the mean price paid and the frequency it is prescribed.
+  The results of the linear regression formula gives us a line around approximately y = 13.34x + 0.14 where y is the mean price paid and x is the frequency of prescription. The resulting R-squared value shows a moderately strong positive correlation between the mean price paid and the frequency it is prescribed. That means that until now, Medicaid has done a moderately good job of making sure to budget their coverage of medications based on need.
 
 # Conclusion
 
