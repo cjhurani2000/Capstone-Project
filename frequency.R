@@ -1,3 +1,5 @@
+## PART 1: ADDING A NEW VARIABLE
+
 #load libraries
 library(readr)
 library(dplyr)
@@ -7,7 +9,7 @@ library(ggplot2)
 coverage_clean <- read_csv("coverage_clean.csv")
 View(coverage_clean)
 
-#create new table
+#create new table with the mean PPMG
 freq_cov <- coverage_clean %>%
   group_by(Type) %>%
   summarize(mean(PPMG))
@@ -24,7 +26,7 @@ freq_cov$Frequency <- NA
 frequencies <- c(0.1679, 0.3357, 0.1363, 0.1191, 0.1990)
 freq_cov$Frequency <- frequencies
 
-#rename column
+#rename column so it is easier to use
 names(freq_cov)[names(freq_cov) == "mean(PPMG)"] <- "Mean_PPMG"
 
 #create file
@@ -32,8 +34,10 @@ write.csv(freq_cov, "coverage_summary.csv")
        
 ##########
 
+## PART TWO: MACHINE LEARNING
+
 freq_cov <- read_csv("coverage_summary.csv")
-view(coverage_summary)
+View(coverage_summary)
 
 #summary and correlation of the mean price and the frequency of prescription
 sub.mean.freq <- subset(freq_cov, select = c("Mean_PPMG", "Frequency"))
@@ -56,4 +60,7 @@ summary(freq.mod)
 anova(freq.mod)
 #The * next to the Mean_PPMG shows that the correlation is significant.
 
+#find coefficients for linear regression line
 coef(summary(freq.mod))
+
+# resulting line y = 13.34x + 0.14
