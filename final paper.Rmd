@@ -1,0 +1,185 @@
+---
+title: "Comparison of Hypertension Medication Prices"
+author: "Chetna Jhurani"
+date: "March 22, 2018"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Introduction
+
+  Hypertension is a rising problem in the United States. According to the CDC, almost one in every three Americans is diagnosed with hypertension, and this number shows no signs of decreasing. Hypertension can often lead to heart disease or stroke, two of the leading causes of death in the United States. Seen here: <https://www.cdc.gov/bloodpressure/faqs.htm>
+
+  As such, there are many different types of hypertension medications that have many different methods of action ranging from simply decreasing blood volume (diuretics) to dilating blood vessels. The most common types of hypertension medications are diuretics, angiotensin-converting enzyme (ACE) inhibitors, angiotensin II receptor blockers (ARBs), and calcium channel blockers (CCBs).  However, the most frequently prescribed medications may not necessarily be as affordable as those that are less frequently prescribed. The main question to focus on is: How can access/affordability of hypertension medication be increased? Programs such as Medicaid increase access to these medications, so the focus will be on Medicaid coverage of certain hypertension medications.
+
+# Deeper Dive into the Dataset
+
+## Important fields and information
+
+  The original data set comes from the December 2017 Federal Upper Limits provided on the Medicaid website seen here: <https://data.medicaid.gov/Drug-Pricing-and-Payment/Federal-Upper-Limits-2017-12/3usn-qyfh/data>. The most important information in the data set is the manufacturing cost and the cost covered by Medicaid.  These columns provided the quantitative data that is needed for further data analysis. After wrangling this data, information on which drugs were hypertension medications as well as the method of action of the specific drug was still needed. The dataset was wrangled further with the information provided by the Mayo Clinic website, which can be seen here: <https://www.mayoclinic.org/diseases-conditions/high-blood-pressure/diagnosis-treatment/drc-20373417>. Not only did it provide the most common hypertension medications, but it gave their method of action as well. Finally, in order to include a quantitative comparison on the most common medications, information on how often each type of hypertension medication was prescribed was also needed. This additional data came from the statistics listed by the NCBI study seen here <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4808570/> and was added to the wrangled data set.
+
+## Limitations of the dataset
+
+  The Federal Upper Limits dataset is limited by the medications that are covered by Medicaid. Although most of the most commonly prescribed medications are covered by Medicaid, the dataset is still restrictive. For one, many of the drugs provided are cut with another drug. Medicaid simply does not cover the pure substances in those cases. If only the pure substances were included, then there would have only been five data points. As a result, the purest versions of the most commonly prescribed medications were included, even if they were cut with something like potassium or hydrochloride. However, even after this, as Medicaid really only covers the most common medications, the sample size is still pretty small. There is only one diuretic included, and neither of the ARBs included are pure. In an ideal dataset, there would be more medications to work with.
+
+## Cleaning and Wrangling
+
+  As previously stated, the initial dataset started out as the Federal Upper Limits (FUL) table, was wrangled and then added information from the Mayo Clinic and the NCBI study was added. There was a lot of extraneous information provided in the FUL table such as the item code number(NDC). Often times, the same medication was listed multiple times with only a different NDC, so this column was removed from the data. Since all of the data was from December 2017, the "Year" and "Month" columns were also removed. Additional columns that were irrelevant were renamed and removed as well. Once all this was done, the "distinct" function was used to remove all the duplicate rows. What was left in the end was ingredient name, strength, dosage, coverage, and manufacturing price.
+
+  When it comes to data wrangling, the two most useful pieces of information here were the manufacturers' prices and the amount covered by Medicaid. Initially, the table was mutated by subtracting the cost covered by Medicaid (Full) from the manufacturers' cost (AMPs), creating the column "Paid". Initially, only this column was kept and added more information was added to it from this point on. However, when referring back to the initial data set, it can be seen that each medication varied with the tablet size. Thus, the table was mutated further to find the price of the drug per milligram (PPMG), making the data more meaningful. However, at this point, the same drug was still listed multiple times with different costs attached. Hence, the data was grouped a by the Ingredient name and kept only the row that contained the lowest cost per milligram, as the main purpose is to find the cheapest medication.
+
+  Now that there was only one row for each drug, a column for the method of action of each drug (Type) was added and filled with the appropriate information. Then another column was created for the pure substances and filled that with the appropriate information as well. However, the dataset still contained every single drug covered by Medicaid, when only the hypertension medications were needed. As a result, the types of hypertension medications were saved in one variable ("Types") and filtered out the rows that did not contain the specified types of hypertension medications.
+  
+  The code can be seen here: <https://github.com/cjhurani2000/Capstone-Project/blob/master/data%20wrangling.R>
+
+  The final table is below.
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+library(readr)
+coverage_clean <- read_csv("coverage_clean.csv")
+View(coverage_clean)
+library(knitr)
+kable(coverage_clean, caption = "Table 1. Coverage Data")
+```
+
+# Preliminary Analysis
+
+  The best method of action following the wrangling of the data was to look at the data graphically with each drug listed individually. The price is listed per gram rather than by milligram so that the difference in pricing is clearer.
+```{r basic_coverage, echo = FALSE, message = FALSE, warning = FALSE}
+library(ggplot2)
+library(dplyr)
+library(scales)
+basic_coverage <- coverage_clean %>%
+ggplot(aes(y = Ingredient, x = PPMG*1000)) +
+  geom_point() +
+  labs(x = "Price Per Gram in Dollars", title = "Figure 1. Price of Each Hypertension Medication")
+
+plot(basic_coverage)
+```
+
+  Visually, Captopril and Candesartan Cilexetil were the most expensive. In order to determine what factors contributed to this, the analysis was taken a step further. From here on, the focus was on comparing the method of action of the drug (Type) and the purity of the substance with the price (PPMG). Before graphing these comparisons, a summary statistic was still needed. Based on the limited data, the statistic chosen was the mean.
+  
+```{r echo = TRUE}
+cov_type <- coverage_clean %>% 
+  group_by(Type) %>% 
+  summarize(mean_PPMG = mean(PPMG)) %>% 
+  arrange(mean_PPMG)
+
+cov_pure <- coverage_clean %>%
+  group_by(Pure) %>%
+  summarize(mean_PPMG = mean(PPMG)) %>%
+  arrange (mean_PPMG)
+```
+
+  The graphs using the above statistics can be seen below.
+
+```{r plot_pure, echo = FALSE}
+cov_pure <- coverage_clean %>%
+  group_by(Pure) %>%
+  summarize(mean_PPMG = mean(PPMG)) %>%
+  arrange (mean_PPMG)
+
+plot_pure <- cov_pure %>%
+  ggplot (aes(x = Pure, y = mean_PPMG * 1000)) +
+  geom_point() +
+  labs(title = "Figure 2. Cost Based on Purity", y = "Mean Price Per Gram in Dollars", x = "Is the Drug Pure?")
+
+plot(plot_pure)
+
+```
+
+```{r plot_type, echo = FALSE}
+cov_type <- coverage_clean %>% 
+  group_by(Type) %>% 
+  summarize(mean_PPMG = mean(PPMG)) %>% 
+  arrange(mean_PPMG)
+
+plot_type<- cov_type %>% 
+  ggplot(aes(x = Type, y = mean_PPMG * 1000)) +
+  geom_point() +
+  labs(title = "Figure 3. Cost by Type of Hypertension Medication", y = "Mean Price Per Gram in Dollars")
+
+plot(plot_type)
+```
+
+## What This Means
+
+  Visually, there is an obvious difference in the price paid for the pure substances versus the ones that are not. This makes sense, as combining two drugs will obviously cost more than one simple drug. This information by itself may not be so useful. However, when examining the data further, it may explain any apparent skew in the data. Looking at the specific types of hypertension medications, ARBs are noticeably the most expensive. At this point, only scatterplots have been included as the data is not only limited, but it is also primarily qualitative. While the cost of ARBs may have been skewed by the impure Candesartan Cilexetil, it may be of interest to know what contributed to the cost of each type of hypertension medication.
+  
+# Further Analysis
+
+## Introducing a New Variable/Further Wrangling
+  
+  So far, only the qualitative data, apart from the PPMG, has been examined. In order to not only introduce a quantitative variable, but to also further examine the types of medications, a new variable was introduced: frequency. This variable comes from the aforementioned NCBI study that contains information on how often each type of medication is prescribed. The introduction of this new variable allows the problem to be framed as a supervised regression machine learning problem: How does the frequency a medication is prescribed correlate with its price?
+
+  To do this, the coverage data from **Table 1** was wrangled even further. Once again, medications were grouped by type, summarized by the mean summary statistic, and were saved in a new table. Then, a column was added for the frequency and was filled in with the values corresponding with those listed in the NCBI article. The frequency refers to the proportion of patients with hypertension that were prescribed a certain medication.
+  
+  The code can be found here: <https://github.com/cjhurani2000/Capstone-Project/blob/master/frequency.R>
+  
+  The resulting table can be seen below.
+  
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+library(readr)
+freq_cov <- read_csv("coverage_summary.csv")
+View(freq_cov)
+library(knitr)
+kable(freq_cov, caption = "Table 2. Prescription Frequency")
+```
+
+## Machine Learning
+
+  First, let's look at this data visually in a scatterplot.
+  
+```{r echo = FALSE}
+sub.mean.freq <- subset(freq_cov, select = c("Mean_PPMG", "Frequency"))
+
+plot_freq<- sub.mean.freq%>%
+  ggplot(aes(x = Mean_PPMG, y = Frequency)) +
+  geom_point() +
+  labs(title = "Figure 4. Cost of Each Drug by Frequency It Is Prescribed", x = "Mean Price Per Milligram in Dollars", y = "Frequency Proportion")
+
+plot(plot_freq)
+```
+
+  Based on this scatterplot, the best way to proceed from here is to use a linear regression model using the code below.
+```{r echo = TRUE}
+#linear regression model
+freq.mod <- lm(Frequency ~ Mean_PPMG, data=freq_cov)
+
+#summarize results
+summary(freq.mod)
+
+#significance
+anova(freq.mod)
+```
+
+  The linear regression formula results in a line around approximately y = 13.34x + 0.14 where y is the mean price paid in dollars and x is the frequency of prescription as a proportion. The values of slope and the y-intercept have been rounded so that the result is a dollar amount. The resulting R-squared value shows a moderately strong positive correlation between the mean price paid and the frequency it is prescribed. That means that until now, Medicaid has done a moderately good job of making sure to budget their coverage of medications based on need.
+
+# Conclusion
+
+## How to Use Findings
+
+1. Patients: The customers who use hypertension medications would be able to use this information in two ways. They can use the qualitative data in order to find the cheapest type of hypertension medication. They can also use both the qualitative and quantitative data in order to determine if the current brand of medication they are using is overcharging them. In other words, they can compare the price of one brand of medication and determine if this is above or below the cost of the medication of that specific type. For example, someone on Candesartan Cilexetil may want to switch to Losartan Potassium.
+
+2. Physicians: The main statistics here really examine the physicians. Physicians can use the data from the first half of the report to prescribe cheaper types of medications. Looking at the frequency vs cost graph, there is an obvious dip in the graph around diuretics. Had physicans noticed this, maybe they would prescribe diuretics more often for patients who are struggling financially. They may also use this to examine why this specific type of medication is not prescribed as often and recommend that the federal budget be allotted to covering those medications that are more commonly prescribed. For example, diuretics can often lead to potassium deficiencies, so this may explain why they are not covered as often.
+
+3. Federal Government/Medicaid: According to the NCBI article, there has been a rise in the prescription of ACE inhibitors. This change, however, has not been reflected in the Medicaid coverage of the drugs. The budget committee can use the formula provided above and can use this to determine coverage of each hypertension medication so that the coverage reflects each medication need. The Federal Upper Limits are reported every month, so it may be beneficial to examine the frequency of prescription as well.
+
+
+## Broader Applications
+
+The formula listed above can be applied to the larger, original dataset. Additional data can be found regarding how often the other Medicaid-covered medications are prescribed. It can also be used to adjust the current price so that it reflects its need. Meaning, there would be increased coverage for those medications that are prescribed more often.
+
+## Further Research
+
+1. Future studies would involve diving deeper into certain populations. This paper focused on the general United States population. However, further studies could examine those in poverty more specifically, as Medicaid coverage would be more closely tied in with that population. For example, diuretics are shown to be more effective for black and older people than ACE inhibitors and beta blockers, so this may explain why the cost does not correlate with the frequency of prescription.
+
+2. The same general concept can also be used for Medicare coverage rather than Medicaid coverage. This, of course, would require a greater focus on older populations. For example, diuretics and ACE inhibitors are known to be much more effective in the elderly than beta blockers are. Thus, Medicare could use the formula to decide upon coverage of hypertension medications for the elderly.
+
+3. As previously stated, the data does not show the final price the patient would have to pay for his/her medication. It only shows the baseline. A further study would go a step further and examine specific brands of hypertension medication and compare their prices with the baseline price provided in this report. The study would show which brands tend to charge more for their product. Additionally, the data from that study could be used to develop an app that customers would use in order to find the cheapest medication in their immediate vicinity.
