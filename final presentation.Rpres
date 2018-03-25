@@ -20,7 +20,7 @@ Types of Hypertension Medications
 
 Hypertension Medications Covered by Medicaid
 ========================================================
-```{r echo = FALSE}
+```{r echo = FALSE, message = FALSE, warning = FALSE}
 library(readr)
 coverage_clean <- read_csv("coverage_clean.csv")
 View(coverage_clean)
@@ -29,12 +29,14 @@ kable(coverage_clean, caption = "Coverage Data")
 ```
 Hypertension Medications Covered by Medicaid
 ========================================================
-```{r basic_coverage, echo = FALSE}
+```{r basic_coverage, echo = FALSE, message = FALSE, warning = FALSE}
 library(ggplot2)
 library(dplyr)
+library(scales)
 basic_coverage <- coverage_clean %>%
 ggplot(aes(y = Ingredient, x = PPMG*1000)) +
-  geom_point()
+  geom_point() +
+  labs(x = "Price Per Gram in Dollars", title = "Price of Each Hypertension Medication")
 
 plot(basic_coverage)
 ```
@@ -47,30 +49,41 @@ cov_type <- coverage_clean %>%
   arrange(mean_PPMG)
 plot_type<- cov_type %>% 
   ggplot(aes(x = Type, y = mean_PPMG * 1000)) +
-  geom_point()
+  geom_point() +
+  labs(title = "Cost by Type of Hypertension Medication", y = "Mean Price Per Gram in Dollars")
 
 plot(plot_type)
 ```
 
 How Often Is Each Type Prescribed?
 ========================================================
-```{r echo = FALSE}
+```{r echo = FALSE, message = FALSE, warning = FALSE}
 library(readr)
 freq_cov <- read_csv("coverage_summary.csv")
 View(freq_cov)
 library(knitr)
-kable(freq_cov, caption = "Prescription Frequency")
+kable(freq_cov, caption = "Table 2. Prescription Frequency")
 ```
 Frequency vs Mean Price
 ========================================================
 ```{r sub.mean.freq, echo = FALSE}
 sub.mean.freq <- subset(freq_cov, select = c("Mean_PPMG", "Frequency"))
-plot(sub.mean.freq)
+
+plot_freq<- sub.mean.freq%>%
+  ggplot(aes(x = Mean_PPMG, y = Frequency)) +
+  geom_point() +
+  labs(title = "Cost of Each Drug by Frequency It Is Prescribed", x = "Mean Price Per Milligram in Dollars", y = "Frequency Proportion")
+
+plot(plot_freq)
 ```
 
 Resulting Formula
 ========================================================
 y = 13.34x + 0.14
+
+- y is mean price paid in dollars
+- x is frequency of prescription as a proportion
+
 
 Who Will Use This?
 ========================================================
